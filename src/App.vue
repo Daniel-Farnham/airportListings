@@ -1,26 +1,54 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <div>
+      <label for="airport">Select Airport: </label>
+      <select v-model="selectedAirport" id="airport">
+        <option disabled value="">Please select one</option>
+        <option v-for="airport in airports" :key="airport.code" :value="airport.code">
+          {{ airport.name }}
+        </option>
+      </select>
+    </div>
+    
+    <div>
+      <h2>Arrivals</h2>
+      <!-- Container for arrivals will go here -->
+    </div>
+    
+    <div>
+      <h2>Departures</h2>
+      <!-- Container for departures will go here -->
+    </div>
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+
+import apiService from '@/apiService';
 
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
+  data() {
+    return {
+      selectedAirport: '',
+      airports: [
+        { name: 'Sydney Airport', code: 'SYD' },
+        { name: 'Melbourne Airport', code: 'MEL' },
+        //... other Australian airports
+      ],
+    };
+  },
+  mounted() {
+    this.fetchData();
+  },
+  methods: {
+    async fetchData() {
+      try {
+        const response = await apiService.apiCall('ping', {param1: 'value1'});
+        console.log(response);
+      } catch (error) {
+        console.error('There was an error!', error);
+      }
+    },
+  },
+};
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
