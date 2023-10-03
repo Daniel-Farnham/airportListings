@@ -4,26 +4,34 @@
       <label for="airport">Select Airport: </label>
       <select v-model="selectedAirport" id="airport">
         <option disabled value="">Please select one</option>
-        <option v-for="airport in airports" :key="airport.code" :value="airport.code">
+        <option v-for="airport in airports" :key="airport.code" :value="airport">
           {{ airport.name }}
         </option>
       </select>
     </div>
-    <div v-if="firstAirport">
-      <h2>Information for the First Airport</h2>
-      <p><strong>Name:</strong> {{ firstAirport.name }}</p>
-      <p><strong>ICAO Code:</strong> {{ firstAirport.icao_code }}</p>
-      <p><strong>IATA Code:</strong> {{ firstAirport.iata_code || 'N/A' }}</p>
-      <p><strong>Country Code:</strong> {{ firstAirport.country_code }}</p>
-    </div>
-    <div>
-      <h2>Arrivals</h2>
-      <!-- Container for arrivals will go here -->
-    </div>
     
     <div>
-      <h2>Departures</h2>
-      <!-- Container for departures will go here -->
+      <div v-if="airportDepInfo && airportDepInfo.response">
+        <h2>Departures</h2>
+        <ul>
+            <li v-for="flight in airportDepInfo.response" :key="flight.flight_iata || flight.flight_icao">
+                <p><strong>Airline IATA:</strong> {{ flight.airline_iata }}</p>
+                <p><strong>Flight Number:</strong> {{ flight.flight_iata }}</p>
+                <p><strong>Destination:</strong> {{ flight.arr_iata }}</p>
+                <!-- Add more fields as needed -->
+            </li>
+        </ul>
+      </div>
+      <div v-if="airportArrInfo && airportArrInfo.response">
+        <h2>Arrivals</h2>
+        <ul>
+            <li v-for="flight in airportArrInfo.response" :key="flight.flight_iata || flight.flight_icao">
+                <p><strong>Airline IATA:</strong> {{ flight.airline_iata }}</p>
+                <p><strong>Flight Number:</strong> {{ flight.flight_iata }}</p>
+                <p><strong>Origin:</strong> {{ flight.dep_iata }}</p>
+            </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -41,25 +49,45 @@ export default {
         // { name: 'Melbourne Airport', code: 'MEL' },
         //... other Australian airports
       ],
+      airportDepInfo: null,
+      airportArrInfo: null,
     };
   },
-  computed: {
-    firstAirport() {
-      // Returns the first airport from the airports array, or null if the array is empty
-      return this.airports.length > 0 ? this.airports[0] : null;
-    },
+  watch: {
+    selectedAirport(newValue) {
+      if (newValue) {
+        this.fetchAirportInfo(newValue); 
+      }
+    }
   },
+
   mounted() {
-    this.fetchData();
+    this.fetchMajorAirports();
   },
   methods: {
-    async fetchData() {
+    async fetchMajorAirports() {
       try {
-        const returnedData = await apiService.apiCall('airports', { country_code: 'AU' });
-        console.log(returnedData);
-        this.airports = returnedData.response; 
+        const airportList = await apiService.apiCall('airports', { country_code: 'AU' });
+        console.log(airportList);
+        this.airports = airportList.response.filter(airport => airport.is_major === 1);
+        console.log(this.airports);
+        this.fetchAirportInfo(this.airports);
       } catch (error) {
-        //console.error('There was an error!', error);
+        console.error('There was an error!', error);
+      } 
+    },
+    async fetchAirportInfo(airport) {
+      try {
+        if (!airport) return;  
+        console.log("Fetching info for:", airport.name);
+        const airportDepInfo = await apiService.apiCall('schedules', { dep_iata: airport.iata_code });
+        const airportArrInfo = await apiService.apiCall('schedules', { arr_iata: airport.iata_code });
+        this.airportDepInfo = airportDepInfo;
+        this.airportArrInfo = airportArrInfo; 
+        console.log(airportDepInfo.response[0]); 
+        console.log(airportArrInfo.response[0]); 
+      } catch (error) {
+        console.error('There was an error fetching airport information!', error);
       }
     },
   },
