@@ -1,53 +1,39 @@
 <template>
   <div id="app">
-    <div>
-      <label for="airport">Select Airport: </label>
-      <select v-model="selectedAirport" id="airport">
-        <option disabled value="">Please select one</option>
-        <option v-for="airport in airports" :key="airport.code" :value="airport">
-          {{ airport.name }}
-        </option>
-      </select>
-    </div>
+    <AirportDropdown :airports="airports" @airport-selected="fetchAirportInfo" />
     
-    <div>
-      <div v-if="airportDepInfo && airportDepInfo.response">
-        <h2>Departures</h2>
-        <ul>
-            <li v-for="flight in airportDepInfo.response" :key="flight.flight_iata || flight.flight_icao">
-                <p><strong>Airline IATA:</strong> {{ flight.airline_iata }}</p>
-                <p><strong>Flight Number:</strong> {{ flight.flight_iata }}</p>
-                <p><strong>Destination:</strong> {{ flight.arr_iata }}</p>
-                <!-- Add more fields as needed -->
-            </li>
-        </ul>
-      </div>
-      <div v-if="airportArrInfo && airportArrInfo.response">
-        <h2>Arrivals</h2>
-        <ul>
-            <li v-for="flight in airportArrInfo.response" :key="flight.flight_iata || flight.flight_icao">
-                <p><strong>Airline IATA:</strong> {{ flight.airline_iata }}</p>
-                <p><strong>Flight Number:</strong> {{ flight.flight_iata }}</p>
-                <p><strong>Origin:</strong> {{ flight.dep_iata }}</p>
-            </li>
-        </ul>
-      </div>
-    </div>
+    <FlightList v-if="airportDepInfo" :flightInfo="airportDepInfo" listType="departures" title="Departures" />
+    <FlightList v-if="airportArrInfo" :flightInfo="airportArrInfo" listType="arrivals" title="Arrivals" />
   </div>
 </template>
+
+<style> 
+  body {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    background-color: #FBF8F8;
+    display: flex;
+    justify-content: center;
+  }
+  #app {
+    margin-top: 10vh; 
+  }
+</style>
 
 <script>
 
 import apiService from '@/apiService';
+import AirportDropdown from './components/airportDropdown.vue';
+import FlightList from './components/flightList.vue';
 
 export default {
+  components: {
+    AirportDropdown,
+    FlightList,
+  },
   data() {
     return {
       selectedAirport: '',
       airports: [
-        // { name: 'Sydney Airport', code: 'SYD' },
-        // { name: 'Melbourne Airport', code: 'MEL' },
-        //... other Australian airports
       ],
       airportDepInfo: null,
       airportArrInfo: null,
@@ -68,10 +54,7 @@ export default {
     async fetchMajorAirports() {
       try {
         const airportList = await apiService.apiCall('airports', { country_code: 'AU' });
-        console.log(airportList);
         this.airports = airportList.response.filter(airport => airport.is_major === 1);
-        console.log(this.airports);
-        this.fetchAirportInfo(this.airports);
       } catch (error) {
         console.error('There was an error!', error);
       } 
@@ -84,14 +67,11 @@ export default {
         const airportArrInfo = await apiService.apiCall('schedules', { arr_iata: airport.iata_code });
         this.airportDepInfo = airportDepInfo;
         this.airportArrInfo = airportArrInfo; 
-        console.log(airportDepInfo.response[0]); 
-        console.log(airportArrInfo.response[0]); 
       } catch (error) {
         console.error('There was an error fetching airport information!', error);
       }
     },
   },
 };
-
 
 </script>
