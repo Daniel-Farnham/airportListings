@@ -2,21 +2,24 @@
   <div class='flightList' v-if="flightInfo && flightInfo.response">
     <h2>{{ title }}</h2>
 
-    <input type="text" v-model="searchTerm" placeholder="Search by Airline IATA or Flight Number">
+    <!-- Search Input -->
+    <input v-model="searchQuery" placeholder="Search for flights..." />
 
     <ul>
-      <li v-for="flight in filteredFlights" :key="flight.flight_iata || flight.flight_icao">
+      <li v-for="flight in paginatedFlights" :key="flight.flight_iata || flight.flight_icao">
         <p><strong>Airline IATA:</strong> {{ flight.airline_iata }}</p>
         <p><strong>Flight Number:</strong> {{ flight.flight_iata }}</p>
         <p><strong>{{ listType === 'departures' ? 'Destination' : 'Origin' }}:</strong> {{ listType === 'departures' ? flight.arr_iata : flight.dep_iata }}</p>
       </li>
     </ul>
+
+    <div>
+      <button @click="previousPage" :disabled="currentPage <= 1">Previous</button>
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      <button @click="nextPage" :disabled="currentPage >= totalPages">Next</button>
+    </div>
   </div>
 </template>
-
-<style scoped>
-
-</style>
 
 <script>
 export default {
@@ -36,20 +39,102 @@ export default {
   },
   data() {
     return {
-      searchTerm: '',
+      searchQuery: "",
       currentPage: 1,
-      itemsPerPage: 10,
+      itemsPerPage: 10
     };
   },
   computed: {
-    // Computed property to filter the flight list based on the search term
     filteredFlights() {
-      if (!this.searchTerm) return this.flightInfo.response;
-      const term = this.searchTerm.toLowerCase();
-      return this.flightInfo.response.filter(flight => {
-        return flight.airline_iata.toLowerCase().includes(term) || flight.flight_iata.toLowerCase().includes(term);
-      });
+      if (!this.searchQuery) {
+        return this.flightInfo.response;
+      }
+      return this.flightInfo.response.filter(flight => 
+        flight.airline_iata.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        flight.flight_iata.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        (this.listType === 'departures' ? flight.arr_iata : flight.dep_iata).toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    },
+    paginatedFlights() {
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.filteredFlights.slice(start, end);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredFlights.length / this.itemsPerPage);
+    }
+  },
+  methods: {
+    nextPage() {
+      if (this.currentPage < this.totalPages) {
+        this.currentPage++;
+      }
+    },
+    previousPage() {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+      }
     }
   }
 };
 </script>
+
+<style scoped>
+  .flightList {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    background-color: #FFF;
+    max-width: 800px;
+    margin: 20px auto;
+  }
+
+  h2 {
+    color: #333;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  input {
+    padding: 10px 15px;
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 0;
+    &:last-child {
+        border-bottom: none;
+    }
+  }
+
+  button {
+    background-color: #007BFF;
+    color: #FFF;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin: 5px;
+
+    &:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: #0056b3;
+    }
+  }
+</style>
