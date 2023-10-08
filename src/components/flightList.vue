@@ -5,13 +5,22 @@
     <!-- Search Input -->
     <input v-model="searchQuery" placeholder="Search for flights..." />
 
-    <ul>
-      <li v-for="flight in paginatedFlights" :key="flight.flight_iata || flight.flight_icao">
-        <p><strong>Airline IATA:</strong> {{ flight.airline_iata }}</p>
-        <p><strong>Flight Number:</strong> {{ flight.flight_iata }}</p>
-        <p><strong>{{ listType === 'departures' ? 'Destination' : 'Origin' }}:</strong> {{ listType === 'departures' ? flight.arr_iata : flight.dep_iata }}</p>
-      </li>
-    </ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Flight Number</th>
+          <th>{{ listType === 'departures' ? 'Destination' : 'Origin' }}</th>
+          <th>Scheduled</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="flight in paginatedFlights" :key="flight.flight_iata || flight.flight_icao">
+          <td>{{ flight.flight_iata }}</td>
+          <td>{{ listType === 'departures' ? flight.arr_iata : flight.dep_iata }}</td>
+          <td>{{ listType === 'departures' ? flight.arr_time : flight.dep_time }}</td> <!-- Assuming the flight data has an estimated departure time -->
+        </tr>
+      </tbody>
+    </table>
 
     <div>
       <button @click="previousPage" :disabled="currentPage <= 1">Previous</button>
@@ -105,18 +114,19 @@ export default {
     margin-bottom: 20px;
   }
 
-  ul {
-    list-style-type: none;
-    padding: 0;
-  }
+  table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  li {
-    border-bottom: 1px solid #e0e0e0;
-    padding: 10px 0;
-    &:last-child {
-        border-bottom: none;
-    }
-  }
+th, td {
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+}
+
+th {
+  background-color: #f4f4f4;
+}
 
   button {
     background-color: #007BFF;

@@ -1,7 +1,6 @@
 <template>
   <div id="app">
     <AirportDropdown :airports="airports" @airport-selected="fetchAirportInfo" />
-    
     <FlightList v-if="airportDepInfo" :flightInfo="airportDepInfo" listType="departures" title="Departures" />
     <FlightList v-if="airportArrInfo" :flightInfo="airportArrInfo" listType="arrivals" title="Arrivals" />
   </div>
@@ -15,7 +14,7 @@
     justify-content: center;
   }
   #app {
-    margin-top: 10vh; 
+    margin-top: 2vh;
   }
 </style>
 
@@ -67,6 +66,7 @@ export default {
         const airportArrInfo = await apiService.apiCall('schedules', { arr_iata: airport.iata_code });
         this.airportDepInfo = airportDepInfo;
         this.airportArrInfo = airportArrInfo; 
+        console.log(airportDepInfo);
       } catch (error) {
         console.error('There was an error fetching airport information!', error);
       }
